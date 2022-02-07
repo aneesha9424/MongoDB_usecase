@@ -288,11 +288,7 @@ namespace test
            
 
             var filter = Builders<BsonDocument>.Filter.Eq("ScenarioID", scenarioid);
-            //var options = new FindOptions<BsonDocument>
-            //{
-            //    // Get 100 docs at a time
-            //    BatchSize = 100
-            //};
+
              var res = collection.FindAsync(filter).Result;
            
             stopWatch.Stop();
