@@ -23,8 +23,8 @@ namespace test
         public static object ScenarioID { get; private set; }
         public static MongoClient client =
             new MongoClient(
-               // "mongodb://RailmaxWeb:Op5K4HM1A6or@dcxrmxpoc04:27017,dcxrmxpoc05:27017,dcxrmxpoc06:27017/admin?replicaSet=MainReplicaSet&ssl=false");
-        "mongodb://127.0.0.1:27017/?readPreference=primary&appname=MongoDB%20Compass&directConnection=true&ssl=false");
+                "mongodb://RailmaxWeb:Op5K4HM1A6or@dcxrmxpoc04:27017,dcxrmxpoc05:27017,dcxrmxpoc06:27017/admin?replicaSet=MainReplicaSet&ssl=false");
+        //"mongodb://127.0.0.1:27017/?readPreference=primary&appname=MongoDB%20Compass&directConnection=true&ssl=false");
         //"mongodb://admin:p%40ssw0rd@host.docker.internal:27017");
 
         private static async Task Main(string[] args)
@@ -47,14 +47,6 @@ namespace test
 
             Console.WriteLine(" args:- 1.Count,2. ScenarioID ,3. PageSize");
 
-            //Console.WriteLine("1. SaveScheduleActual      args:- Count, is seq, is parallel");
-            //Console.WriteLine("2. GETScheduleActualwithoutjoin ");
-            //Console.WriteLine("3. GETScheduleActual ");
-            //Console.WriteLine("4. UPDActualMovement ");
-            //Console.WriteLine("5. DELScheduleActual ");
-            //Console.WriteLine("6. GETScheduleActualpagination args :- pageSize");
-            //Console.WriteLine("7. ReadWriteScheduleActual args:- Count, is seq, is parallel");
-            //int input = Convert.ToInt32(args[0]);
             List<Tuple<double, double, double, double, double, double, double>> observation =
                 new List<Tuple<double, double, double, double, double, double, double>>();
             var inputList = new List<int>() {6}; 
@@ -311,7 +303,7 @@ namespace test
             IMongoDatabase db = client.GetDatabase("Schedule_Dummy");
             var stopWatch = new Stopwatch();
             stopWatch.Start();
-            var collection = db.GetCollection<BsonDocument>("ScheduleActualNew");
+            var collection = db.GetCollection<BsonDocument>("ScheduleActual");
 
             int page = 1;
       
