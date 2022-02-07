@@ -29,10 +29,10 @@ namespace test
 
         private static async Task Main(string[] args)
         {
-            args = new string[4];
-            args[0] = "50000";
-            args[1] = "1";
-            args[2] = "100";
+            //args = new string[4];
+            //args[0] = "50000";
+            //args[1] = "1";
+            //args[2] = "100";
 
             BsonSerializer.RegisterSerializer(new GuidSerializer(BsonType.String));
             BsonClassMap.RegisterClassMap<Schedule>(map =>
@@ -49,7 +49,7 @@ namespace test
 
             List<Tuple<double, double, double, double, double, double, double>> observation =
                 new List<Tuple<double, double, double, double, double, double, double>>();
-            var inputList = new List<int>() {6}; 
+            var inputList = new List<int>() {7}; 
             Console.WriteLine("Running 1 times.........................");
             for (int i = 0; i < 1 ; i++)
             {
@@ -154,6 +154,7 @@ namespace test
                 var list = ScheduleHelper.CreateSchedules(count, scenarioid);
                     scheduleList.AddRange(list);
                 //}
+                var bsonScheduleList = scheduleList.Select(s => s.ToBsonDocument()).ToList();
                 var batchSize = 5000;
                 var noOfBatches = (count / batchSize) + (count % batchSize == 0 ? 0 : 1);
                 var source = Enumerable.Range(1, noOfBatches).ToArray();
@@ -162,14 +163,14 @@ namespace test
 
                 stopWatch.Start();
                 var collection = db.GetCollection<BsonDocument>("ScheduleActual");
-          
 
-              scheduleList.ParallelForEachAsync(
+
+                bsonScheduleList.ParallelForEachAsync(
                     async item =>
                     {
                         try
                         {
-                            await collection.InsertOneAsync(item.ToBsonDocument());
+                            await collection.InsertOneAsync(item);
                         }
                         catch (Exception ex)
                         {
@@ -207,18 +208,18 @@ namespace test
    
                 var list = ScheduleHelper.CreateSchedules(count, scenarioid);
                 scheduleList.AddRange(list);
-
+                var bsonScheduleList = scheduleList.Select(s => s.ToBsonDocument()).ToList();
                 var stopWatch = new Stopwatch();
 
                 stopWatch.Start();
                 var collection = db.GetCollection<BsonDocument>("ScheduleActual");
 
-                scheduleList.ParallelForEachAsync(
+                bsonScheduleList.ParallelForEachAsync(
                     async item =>
                     {
                         try
                         {
-                            await collection.InsertOneAsync(item.ToBsonDocument());
+                            await collection.InsertOneAsync(item);
 
                         }
                         catch (Exception ex)
