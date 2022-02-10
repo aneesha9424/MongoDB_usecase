@@ -259,7 +259,7 @@ namespace test
             var option = new AggregateOptions() { AllowDiskUse = true };
             var ddTask = collection.AggregateAsync<BsonDocument>(pipeline, option).Result;
 
-            stopWatch.Stop();
+            
 
             //int countOfRead = 0;
             var enumerator = ddTask.ToList();// ToEnumerable().GetEnumerator();
@@ -267,6 +267,7 @@ namespace test
             //{
             //    countOfRead++;
             //}
+            stopWatch.Stop();
             Console.WriteLine($"Record count is  {enumerator.Count}");
             Console.WriteLine($"Time elapsed in milliseconds to read {stopWatch.Elapsed.TotalMilliseconds}");
             return stopWatch.Elapsed.TotalMilliseconds;
