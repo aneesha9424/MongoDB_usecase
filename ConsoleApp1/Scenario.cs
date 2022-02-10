@@ -49,7 +49,7 @@ namespace test
 
             List<Tuple<double, double, double, double, double, double, double>> observation =
                 new List<Tuple<double, double, double, double, double, double, double>>();
-            var inputList = new List<int>() {7}; 
+            var inputList = new List<int>() {3}; 
             Console.WriteLine("Running 1 times.........................");
             for (int i = 0; i < 1 ; i++)
             {
@@ -261,13 +261,13 @@ namespace test
 
             stopWatch.Stop();
 
-            int countOfRead = 0;
-            var enumerator = ddTask.ToEnumerable().GetEnumerator();
-            while (enumerator.MoveNext())
-            {
-                countOfRead++;
-            }
-            Console.WriteLine($"Record count is  {countOfRead}");
+            //int countOfRead = 0;
+            var enumerator = ddTask.ToList();// ToEnumerable().GetEnumerator();
+            //while (enumerator.MoveNext())
+            //{
+            //    countOfRead++;
+            //}
+            Console.WriteLine($"Record count is  {enumerator.Count}");
             Console.WriteLine($"Time elapsed in milliseconds to read {stopWatch.Elapsed.TotalMilliseconds}");
             return stopWatch.Elapsed.TotalMilliseconds;
         }
@@ -286,14 +286,14 @@ namespace test
            
             stopWatch.Stop();
 
-            int countOfRead = 0;
+            //int countOfRead = 0;
 
-            var enumerator = res.ToEnumerable().GetEnumerator();
-            while (enumerator.MoveNext())
-            {
-                countOfRead++;
-            }
-            Console.WriteLine($"Record count is  {countOfRead}");
+            var enumerator = res.ToList();//ToEnumerable().GetEnumerator();
+            //while (enumerator.MoveNext())
+            //{
+            //    countOfRead++;
+            //}
+            Console.WriteLine($"Record count is  {enumerator.Count}");
 
             Console.WriteLine($"Time elapsed in milliseconds to read {stopWatch.Elapsed.TotalMilliseconds}");
             return stopWatch.Elapsed.TotalMilliseconds;

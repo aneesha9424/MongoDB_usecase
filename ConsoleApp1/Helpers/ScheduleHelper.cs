@@ -33,7 +33,7 @@ namespace ConsoleApp1.Helpers
         {
             List<Movement> movementList = new List<Movement>();
 
-            for (int i = 0; i < 500; i++)
+            for (int i = 0; i < 50; i++)
             {
                 Movement movement = new Movement
                 {
