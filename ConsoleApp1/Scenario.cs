@@ -101,12 +101,7 @@ namespace test
                             Console.WriteLine("Calling SAVEScheduleActualwithoutbatch");
                             res7 = SAVEScheduleActualwithoutbatch(count1,scenarioid6);
                             break;
-                        case 8:
-                            int count8 = Convert.ToInt32(args[0]);
-                            int scenarioid8 = Convert.ToInt32(args[1]);
-                            Console.WriteLine("Calling SAVEScheduleMovement");
-                            res7 = SAVEScheduleMovement(count8, scenarioid8);
-                            break;
+
 
                         default:
                             break;
@@ -295,8 +290,7 @@ namespace test
             var filter = Builders<BsonDocument>.Filter.Eq("ScenarioID", scenarioid);
 
              var res = collection.FindAsync(filter).Result;
-           client.Cluster.Dispose();
-            //dipose
+           //client.Cluster.Dispose();
             var convertToList = res.ToListAsync().Result;
             //count
             var count = res.ToEnumerable().Count();
@@ -397,54 +391,6 @@ namespace test
 
         //    db.DropCollection("ScheduleActual");
         //}
-        private static double SAVEScheduleMovement(int count, int scenarioid)
-        {
-            try
-            {
-                IMongoDatabase db = client.GetDatabase("Movement");
-
-                List<Schedule> scheduleList = new List<Schedule>();
-
-                // for (int i = 1; i < 3; i++)
-                //{   
-                var list = ScheduleHelper.CreateSchedules(count, scenarioid);
-                scheduleList.AddRange(list);
-                //}
-                var bsonScheduleList = scheduleList.Select(s => s.ToBsonDocument()).ToList();
-                var batchSize = 5000;
-                var noOfBatches = (count / batchSize) + (count % batchSize == 0 ? 0 : 1);
-                var source = Enumerable.Range(1, noOfBatches).ToArray();
-
-                var stopWatch = new Stopwatch();
-
-                stopWatch.Start();
-                var collection = db.GetCollection<BsonDocument>("ScheduleMovement");
-
-
-                bsonScheduleList.ParallelForEachAsync(
-                    async item =>
-                    {
-                        try
-                        {
-                            await collection.InsertOneAsync(item);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine("Error");
-                        }
-                    }, noOfBatches).Wait();
-
-                stopWatch.Stop();
-                Console.WriteLine($"Time elapsed in milliseconds to write {stopWatch.Elapsed.TotalMilliseconds}");
-                return stopWatch.Elapsed.TotalMilliseconds;
-
-            }
-            catch (Exception e1)
-            {
-                Console.WriteLine(e1);
-            }
-
-            return 0;
-        }
+      
     }
 }
