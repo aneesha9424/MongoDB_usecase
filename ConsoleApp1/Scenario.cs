@@ -49,7 +49,7 @@ namespace test
 
             List<Tuple<double, double, double, double, double, double, double>> observation =
                 new List<Tuple<double, double, double, double, double, double, double>>();
-            var inputList = new List<int>() {3}; 
+            var inputList = new List<int>() {8}; 
             Console.WriteLine("Running 1 times.........................");
             for (int i = 0; i < 1 ; i++)
             {
@@ -100,6 +100,12 @@ namespace test
                             int scenarioid6 = Convert.ToInt32(args[1]);
                             Console.WriteLine("Calling SAVEScheduleActualwithoutbatch");
                             res7 = SAVEScheduleActualwithoutbatch(count1,scenarioid6);
+                            break;
+                        case 8:
+                            int count8 = Convert.ToInt32(args[0]);
+                            int scenarioid8 = Convert.ToInt32(args[1]);
+                            Console.WriteLine("Calling SAVEScheduleMovement");
+                            res7 = SAVEScheduleMovement(count8, scenarioid8);
                             break;
 
                         default:
@@ -257,18 +263,23 @@ namespace test
 
             var pipeline = new[] { match, lookup };
             var option = new AggregateOptions() { AllowDiskUse = true };
-            var ddTask = collection.AggregateAsync<BsonDocument>(pipeline, option).Result;
+             var ddTask = collection.AggregateAsync<BsonDocument>(pipeline, option).Result;
+          
+            //Console.WriteLine($" before dispose");
+            //client.Cluster.Dispose();
+            //Console.WriteLine($" after dispose");
+            //  int countOfRead = 0;
 
-            
-
-            //int countOfRead = 0;
-            var enumerator = ddTask.ToList();// ToEnumerable().GetEnumerator();
+            var convertToList = ddTask.ToListAsync().Result;//ToEnumerable().Count();// GetEnumerator();
+           
+            int count = convertToList.Count;
+            stopWatch.Stop();
             //while (enumerator.MoveNext())
             //{
             //    countOfRead++;
             //}
-            stopWatch.Stop();
-            Console.WriteLine($"Record count is  {enumerator.Count}");
+
+            Console.WriteLine($"Record count is  {count}");
             Console.WriteLine($"Time elapsed in milliseconds to read {stopWatch.Elapsed.TotalMilliseconds}");
             return stopWatch.Elapsed.TotalMilliseconds;
         }
@@ -284,17 +295,17 @@ namespace test
             var filter = Builders<BsonDocument>.Filter.Eq("ScenarioID", scenarioid);
 
              var res = collection.FindAsync(filter).Result;
-           
+           client.Cluster.Dispose();
+            //dipose
+            var convertToList = res.ToListAsync().Result;
+            //count
+            var count = res.ToEnumerable().Count();
+
             stopWatch.Stop();
 
-            //int countOfRead = 0;
+           // int count = convertToList.Count;
 
-            var enumerator = res.ToList();//ToEnumerable().GetEnumerator();
-            //while (enumerator.MoveNext())
-            //{
-            //    countOfRead++;
-            //}
-            Console.WriteLine($"Record count is  {enumerator.Count}");
+            Console.WriteLine($"Record count is  {count}");
 
             Console.WriteLine($"Time elapsed in milliseconds to read {stopWatch.Elapsed.TotalMilliseconds}");
             return stopWatch.Elapsed.TotalMilliseconds;
@@ -308,26 +319,35 @@ namespace test
             var collection = db.GetCollection<BsonDocument>("ScheduleActual");
 
             int page = 1;
-      
-            List<BsonDocument> data = new List<BsonDocument>();
-            var filter = Builders<BsonDocument>.Filter.Eq("ScenarioID", scenarioid);
-            int dCount =0;
+            BsonDocument[] newData = new BsonDocument[]
+            {
+            new BsonDocument("$match",new BsonDocument("ScenarioID", scenarioid)),
+            new BsonDocument("$skip", (page - 1) * pageSize),
+            new BsonDocument("$limit", pageSize)
+            };
+            int dCount = 0;
+            long pageExecutionTime = 0;
             while (true)
-            {                
-                var res = collection.Find(filter).Limit(pageSize).ToListAsync().Result;                
-                Console.WriteLine($"Record count for pagination  is  {res.Count}");
-                stopWatch.Stop();
-                Console.WriteLine($"Time elapsed in milliseconds to read {stopWatch.Elapsed.TotalMilliseconds}");
-                dCount = res.Count + dCount;
-                if (dCount == 500 || res.Count < pageSize)
+            {
+                var res = collection.AggregateAsync<BsonDocument>(newData, new AggregateOptions() { AllowDiskUse = true }).Result;
+                var resultCount = res.ToEnumerable().Count();
+                Console.WriteLine($"Record count for pagination is {resultCount}");
+                //Console.WriteLine($"Time elapsed in milliseconds to read {stopWatch.Elapsed.TotalMilliseconds}");
+               
+                dCount = resultCount + dCount;
+                if (dCount == 500 || resultCount < pageSize)
                     break;
                 page++;
             }
-            
-            Console.WriteLine($"Record count is  {dCount}");
+            stopWatch.Stop();
+            pageExecutionTime = stopWatch.ElapsedMilliseconds / 5;
+            Console.WriteLine($"Record count is {dCount}");
 
-            
+
+            Console.WriteLine($"Time elapsed in milliseconds to read {pageExecutionTime}");
             return stopWatch.Elapsed.TotalMilliseconds;
+
+
 
         }
         private static double UPDActualMovement(int scenarioid)
@@ -377,5 +397,54 @@ namespace test
 
         //    db.DropCollection("ScheduleActual");
         //}
+        private static double SAVEScheduleMovement(int count, int scenarioid)
+        {
+            try
+            {
+                IMongoDatabase db = client.GetDatabase("Movement");
+
+                List<Schedule> scheduleList = new List<Schedule>();
+
+                // for (int i = 1; i < 3; i++)
+                //{   
+                var list = ScheduleHelper.CreateSchedules(count, scenarioid);
+                scheduleList.AddRange(list);
+                //}
+                var bsonScheduleList = scheduleList.Select(s => s.ToBsonDocument()).ToList();
+                var batchSize = 5000;
+                var noOfBatches = (count / batchSize) + (count % batchSize == 0 ? 0 : 1);
+                var source = Enumerable.Range(1, noOfBatches).ToArray();
+
+                var stopWatch = new Stopwatch();
+
+                stopWatch.Start();
+                var collection = db.GetCollection<BsonDocument>("ScheduleMovement");
+
+
+                bsonScheduleList.ParallelForEachAsync(
+                    async item =>
+                    {
+                        try
+                        {
+                            await collection.InsertOneAsync(item);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Error");
+                        }
+                    }, noOfBatches).Wait();
+
+                stopWatch.Stop();
+                Console.WriteLine($"Time elapsed in milliseconds to write {stopWatch.Elapsed.TotalMilliseconds}");
+                return stopWatch.Elapsed.TotalMilliseconds;
+
+            }
+            catch (Exception e1)
+            {
+                Console.WriteLine(e1);
+            }
+
+            return 0;
+        }
     }
 }
