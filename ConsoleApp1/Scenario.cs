@@ -49,7 +49,7 @@ namespace test
 
             List<Tuple<double, double, double, double, double, double, double>> observation =
                 new List<Tuple<double, double, double, double, double, double, double>>();
-            var inputList = new List<int>() {8}; 
+            var inputList = new List<int>() {1}; 
             Console.WriteLine("Running 1 times.........................");
             for (int i = 0; i < 1 ; i++)
             {
@@ -163,7 +163,7 @@ namespace test
                 var stopWatch = new Stopwatch();
 
                 stopWatch.Start();
-                var collection = db.GetCollection<BsonDocument>("ScheduleActual");
+                var collection = db.GetCollection<BsonDocument>("ScheduleMovement");
 
 
                 bsonScheduleList.ParallelForEachAsync(
